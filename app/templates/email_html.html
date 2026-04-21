@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }}</title>
+    <style>
+      /* Keep CSS conservative for email clients. Many clients strip <style>, so we also inline key styles below. */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #0b1220 !important;
+        }
+        .card {
+          background: #0f172a !important;
+        }
+        .muted {
+          color: #9ca3af !important;
+        }
+        .text {
+          color: #e5e7eb !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin:0; padding:0; background:#f5f7fb; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color:#111827;">
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">
+      {{ preview_text }}
+    </div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f5f7fb; padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px; max-width:600px;">
+            <tr>
+              <td style="padding:0 6px 12px 6px;">
+                <div class="muted" style="font-size:12px; color:#6b7280; letter-spacing:0.08em; text-transform:uppercase;">DIAMOND</div>
+              </td>
+            </tr>
+            <tr>
+              <td class="card" style="background:#ffffff; border-radius:12px; padding:22px 22px 18px 22px; box-shadow:0 1px 2px rgba(0,0,0,0.06);">
+                <div class="text" style="font-size:18px; font-weight:700; line-height:1.3; margin:0 0 12px 0;">{{ heading }}</div>
+                <div class="text" style="font-size:14px; line-height:1.7; color:#111827;">
+                  {{ body_html }}
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:14px 6px 0 6px;">
+                <div class="muted" style="font-size:12px; line-height:1.6; color:#6b7280;">
+                  {{ footer_text }}
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+
