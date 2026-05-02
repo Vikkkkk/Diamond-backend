@@ -26,7 +26,7 @@ class DoorFrameRawMaterialSections(Base):
 
     id = Column(String(36), default=generate_uuid, primary_key=True, unique=True)
     project_id = Column(String(36), ForeignKey("projects.id"))
-    material_type = Column(String(36) , nullable=True)
+    material_type = Column(String(36) , Enum(MATERIAL_TYPE), nullable=False)
     raw_material_id = Column(String(36), ForeignKey("raw_materials.id"))
     created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

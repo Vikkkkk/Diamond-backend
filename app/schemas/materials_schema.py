@@ -227,10 +227,10 @@ class UpdateDoorFrameMaterialSectionRequest(BaseModel):
         min_length=1,
         description="Raw material IDs",
     )
-    # material_type: str = Field(
-    #     ...,
-    #     description="Material type for every raw material (DOOR, FRAME, etc.)",
-    # )
+    material_type: str = Field(
+        ...,
+        description="Material type for every raw material (DOOR, FRAME, etc.)",
+    )
 
     @model_validator(mode="after")
     def raw_ids_unique(self) -> "UpdateDoorFrameMaterialSectionRequest":

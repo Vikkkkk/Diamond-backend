@@ -1390,7 +1390,7 @@ async def update_project_material_description(
 @logger.catch
 async def get_door_frame_material_section(
     project_id: str,
-    raw_material_id: Optional[str] = None,
+    material_type: str = Query(..., description="Material type: DOOR, FRAME"),
     verified_token: bool = Depends(verify_token),
     role_required=Depends(
         role_required(
@@ -1411,7 +1411,7 @@ async def get_door_frame_material_section(
         if not verified_token:
             return invalid_credential_resp
         return await material_controller.get_door_frame_material_sections(
-            db, project_id, raw_material_id
+            db, project_id,material_type
         )
     except Exception as error:
         return JSONResponse(content={"message": str(error)}, status_code=500)

@@ -2,7 +2,7 @@
 This module containes all schemas those are related to TakeOffSheets add/update/read/delete requests.
 """
 from typing import List, Optional, Union, Dict, Literal
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 from uuid import UUID
 from datetime import datetime
 
@@ -36,21 +36,6 @@ class TakeOffSheetItem(BaseModel):
     updated_by: Optional[str] = Field(None, description="TakeOffSheets updated by")
     deleted_at: Optional[Union[str, datetime]] = Field(None, description="TakeOffSheets deletion time")
     deleted_by: Optional[str] = Field(None, description="TakeOffSheets deleted by")
-    is_batch_insert: Optional[bool] = Field(None, description="Is batch insert")
-    batch_insert_quantity: Optional[int] = Field(None, description="Batch insert quantity")
-
-
-    @model_validator(mode='after')
-    def validate_batch_insert_fields(self):
-        if self.is_batch_insert and self.batch_insert_quantity is None:
-            raise ValueError("Batch quantity is required when is_batch_insert is True")
-        if self.is_batch_insert and self.batch_insert_quantity <= 0:
-            raise ValueError("Batch quantity must be greater than 0")
-        if self.is_batch_insert and self.batch_insert_quantity > 50:
-            raise ValueError("Batch quantity must be less than or equal to 50")
-        
-        return self
-
 
 
 class TakeOffSheetCloneRequest(BaseModel):

@@ -246,7 +246,7 @@ async def get_catalogs(db: Session, page: int, page_size: int, keyword: str):
             )
             if not raw_material_data:
                 return JSONResponse(
-                    status_code=404, content={"message": "Invalid keyword provided"}
+                    status_code=400, content={"message": "Invalid keyword provided"}
                 )
 
             # Gather acceptable manufacturer IDs based on the keyword
@@ -270,7 +270,7 @@ async def get_catalogs(db: Session, page: int, page_size: int, keyword: str):
             catalog_data = catalog_data.filter(*filter_condition)
         elif keyword:
             return JSONResponse(
-                status_code=404,
+                status_code=400,
                 content={"message": f"No Catalog found providing {keyword}"},
             )
 
@@ -3709,14 +3709,14 @@ async def update_material_desc(
         return JSONResponse(content={"message": str(error)}, status_code=500)
 
 
-async def get_door_frame_material_sections(db: Session, project_id: str,raw_material_id: str = None):
+async def get_door_frame_material_sections(db: Session, project_id: str, material_type: str):
     """Return all door frame raw material section rows for a project."""
     try:
-        query = db.query(DoorFrameRawMaterialSections).filter(DoorFrameRawMaterialSections.project_id == project_id)
-        if raw_material_id:
-            query = query.filter(DoorFrameRawMaterialSections.raw_material_id == raw_material_id)
-        sections = query.all()
-
+        sections = (
+            db.query(DoorFrameRawMaterialSections)
+            .filter(DoorFrameRawMaterialSections.project_id == project_id, DoorFrameRawMaterialSections.material_type == material_type)
+            .all()
+        )
         data =[]
         for section in sections:
             data_temp = section.to_dict
@@ -3734,12 +3734,13 @@ async def get_door_frame_material_sections(db: Session, project_id: str,raw_mate
         logger.exception(f"get_door_frame_material_sections error: {error}")
         raise error
 
+
 async def update_door_frame_material_section(
     project_id: str,
     door_frame_raw_material_section_request: UpdateDoorFrameMaterialSectionRequest,
     db: Session,
 ):
-    """Create or update rows keyed by (project_id, raw_material_id)."""
+    """Create or update rows keyed by (project_id, raw_material_id) with a single material_type."""
     try:
 
         if db.in_transaction():
@@ -3747,8 +3748,19 @@ async def update_door_frame_material_section(
 
         with db.begin():
             raw_ids = door_frame_raw_material_section_request.raw_material_ids
+            mt_str = door_frame_raw_material_section_request.material_type
+            mt_str = mt_str.value if hasattr(mt_str, "value") else str(mt_str)
+            try:
+                material_type_enum = MATERIAL_TYPE(mt_str)
+            except ValueError:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "message": f"Invalid material_type: {mt_str}",
+                        "status": "error",
+                    },
+                )
 
-            # Validate raw material IDs
             found_rows = (
                 db.query(RawMaterials.id)
                 .filter(RawMaterials.id.in_(raw_ids))
@@ -3756,7 +3768,6 @@ async def update_door_frame_material_section(
             )
             found_set = {str(r[0]) for r in found_rows}
             missing = [rid for rid in raw_ids if str(rid) not in found_set]
-
             if missing:
                 return JSONResponse(
                     status_code=404,
@@ -3767,39 +3778,48 @@ async def update_door_frame_material_section(
                     },
                 )
 
-            # Fetch existing rows
+            def _mt_val(mt) -> str:
+                if mt is None:
+                    return ""
+                return mt.value if hasattr(mt, "value") else str(mt)
+
+            mt_val = _mt_val(material_type_enum)
+            pair_set = {(str(rid), mt_val) for rid in raw_ids}
+
             project_rows = (
                 db.query(DoorFrameRawMaterialSections)
                 .filter(DoorFrameRawMaterialSections.project_id == project_id)
                 .all()
             )
-
-            # Map existing rows by raw_material_id
-            by_raw_id = {str(r.raw_material_id): r for r in project_rows}
+            # First row per raw_material_id matches prior .first() semantics per id
+            by_raw_id = {}
+            for r in project_rows:
+                k = str(r.raw_material_id)
+                if k not in by_raw_id:
+                    by_raw_id[k] = r
 
             saved = []
             for raw_material_id in raw_ids:
                 rid = str(raw_material_id)
                 row = by_raw_id.get(rid)
-
                 if row is None:
                     row = DoorFrameRawMaterialSections(
                         id=generate_uuid(),
                         project_id=project_id,
                         raw_material_id=raw_material_id,
+                        material_type=mt_str,
                     )
                     db.add(row)
                     by_raw_id[rid] = row
-
+                else:
+                    row.material_type = mt_str
                 saved.append(row.to_dict)
 
-            # Remove rows not in request
             ids_to_remove = [
                 r.id
                 for r in project_rows
-                if str(r.raw_material_id) not in {str(rid) for rid in raw_ids}
+                if (str(r.raw_material_id), _mt_val(r.material_type)) not in pair_set
             ]
-
             if ids_to_remove:
                 (
                     db.query(DoorFrameRawMaterialSections)
@@ -3820,6 +3840,7 @@ async def update_door_frame_material_section(
     except Exception as error:
         logger.exception(f"update_door_frame_material_section error: {error}")
         return JSONResponse(content={"message": str(error)}, status_code=500)
+
 
 async def get_openings(db: Session, project_id: str, material_type: str):
     """Get opening id and opening number list by project id and material type."""
