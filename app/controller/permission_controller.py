@@ -80,7 +80,7 @@ async def get_member_role_permission(db: Session, member_id: str, role_id: str):
     
 
 
-def create_permissions(role_permissions: RolePermissions, current_member: Members, db: Session):
+async def create_permissions(role_permissions: RolePermissions, current_member: Members, db: Session):
     """**Summary:**
     This method is responsible for creating the role permissions
     """

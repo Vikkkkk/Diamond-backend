@@ -99,7 +99,7 @@ def perform_seeding():
 
     """
     try:
-        if strtobool(os.environ.get("SEEDING")):
+        if strtobool(os.environ.get("SEEDING") or "false"):
             logger.info("Starting seed...")
             seeder_obj = Seeder()
             seeder_obj.start_seeding()
